@@ -39,6 +39,7 @@
     "winston": "^3.19.0"
   },
   "devDependencies": {
+    "jscpd": "^4.0.5",
     "nodemon": "^3.0.2"
   },
   "engines": {
