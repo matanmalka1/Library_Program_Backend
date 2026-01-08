@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 import { connectDB, disconnectDB } from "./config/db.js";
-import { User, Role, Permission, Category, Book } from "./models/index.js";
+import { User, Role, Permission, Category, Book, Order, Review } from "./models/index.js";
 
 const envFile =
   process.env.NODE_ENV === "production"
@@ -959,7 +959,27 @@ const seed = async () => {
     },
   ];
 
-  for (const book of books) {
+  const extraBooks = Array.from({ length: 40 }, (_, index) => {
+    const number = index + 1;
+    const year = 2000 + (index % 20);
+    const category = categories[index % categories.length];
+    const secondaryCategory = categories[(index + 3) % categories.length];
+    return {
+      title: `Library Seed Volume ${number}`,
+      author: `Author ${String.fromCharCode(65 + (index % 26))}.`,
+      isbn: `SEED-${String(number).padStart(4, "0")}`,
+      price: 9.99 + (index % 15) * 1.5,
+      description: "A curated seed entry to enrich the catalog dataset.",
+      coverImage: `https://picsum.photos/seed/seedbook${number}/400/600`,
+      stockQuantity: 5 + (index % 20),
+      categories: [category, secondaryCategory],
+      publisher: "Seedhouse Publishing",
+      publicationDate: `${year}-06-15`,
+      rating: Number((3.5 + (index % 15) * 0.1).toFixed(1)),
+    };
+  });
+
+  for (const book of [...books, ...extraBooks]) {
     const existing = await Book.findOne({ isbn: book.isbn });
     if (!existing) {
       await Book.create({
@@ -970,6 +990,79 @@ const seed = async () => {
   }
 
   console.log("Books created");
+
+  const seededUsers = await User.find({}).lean();
+  const seededBooks = await Book.find({}).lean();
+
+  if (!seededUsers.length || !seededBooks.length) {
+    console.warn("Skipping orders/reviews seed: missing users or books.");
+  } else {
+    const orderStatuses = ["PENDING", "SHIPPED", "DELIVERED", "CANCELLED"];
+
+    for (let i = 0; i < 40; i += 1) {
+      const user = seededUsers[i % seededUsers.length];
+      const firstBook = seededBooks[(i * 2) % seededBooks.length];
+      const secondBook = seededBooks[(i * 2 + 5) % seededBooks.length];
+      const items = [
+        {
+          book: firstBook._id,
+          title: firstBook.title,
+          price: firstBook.price,
+          quantity: 1 + (i % 2),
+        },
+      ];
+      if (i % 3 === 0) {
+        items.push({
+          book: secondBook._id,
+          title: secondBook.title,
+          price: secondBook.price,
+          quantity: 1,
+        });
+      }
+      const total = items.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+      );
+      const shippingAddress = `Seed Order ${i + 1} - ${user.email}`;
+      const existingOrder = await Order.findOne({ shippingAddress });
+      if (!existingOrder) {
+        const status = orderStatuses[i % orderStatuses.length];
+        await Order.create({
+          user: user._id,
+          items,
+          total,
+          shippingAddress,
+          status,
+          statusHistory: [{ status, date: new Date(), note: "Seeded order" }],
+          placedAt: new Date(Date.now() - i * 86400000),
+        });
+      }
+    }
+
+    for (let i = 0; i < 40; i += 1) {
+      const user = seededUsers[(i + 1) % seededUsers.length];
+      const book = seededBooks[(i * 3) % seededBooks.length];
+      const comment = `Seed review ${i + 1} for ${book.title}`;
+      const existingReview = await Review.findOne({ comment });
+      if (!existingReview) {
+        const review = await Review.create({
+          book: book._id,
+          user: user._id,
+          userName: `${user.firstName} ${user.lastName}`,
+          rating: 3 + (i % 3),
+          comment,
+          approved: i % 2 === 0,
+          date: new Date(Date.now() - i * 43200000),
+        });
+        await Book.updateOne(
+          { _id: book._id },
+          { $addToSet: { reviews: review._id } }
+        );
+      }
+    }
+  }
+
+  console.log("Orders and reviews created");
   console.log("Database seeded successfully!");
 
   await disconnectDB();
