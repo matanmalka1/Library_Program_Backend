@@ -1,85 +1,45 @@
-import mongoose from "mongoose";
+import { z } from "zod";
 import {
-  buildValidationError,
-  isNonEmptyString,
-  isPositiveNumber,
+  nonEmptyStringSchema,
+  nonNegativeNumberSchema,
+  objectIdSchema,
+  runSchema,
 } from "./validatorUtils.js";
 
 export const validateBookIdParam = (req, _res, next) => {
-  const { id } = req.params;
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return next(
-      buildValidationError([{ field: "id", message: "Invalid book ID format" }])
-    );
-  }
-  return next();
+  const paramsSchema = z.object({
+    id: objectIdSchema("book"),
+  });
+  return runSchema(paramsSchema, req.params ?? {}, next);
 };
 
 export const validateCreateBook = (req, _res, next) => {
-  const { title, author, price } = req.body ?? {};
-  const errors = [];
+  const createBookSchema = z.object({
+    title: nonEmptyStringSchema("Title is required"),
+    author: nonEmptyStringSchema("Author is required"),
+    price: nonNegativeNumberSchema("Price must be a number >= 0"),
+  });
 
-  if (!isNonEmptyString(title)) {
-    errors.push({ field: "title", message: "Title is required" });
-  }
-
-  if (!isNonEmptyString(author)) {
-    errors.push({ field: "author", message: "Author is required" });
-  }
-
-  if (!isPositiveNumber(price)) {
-    errors.push({ field: "price", message: "Price must be a number >= 0" });
-  }
-
-  return errors.length ? next(buildValidationError(errors)) : next();
+  return runSchema(createBookSchema, req.body ?? {}, next);
 };
 
 export const validateUpdateBook = (req, _res, next) => {
-  const { title, author, price, stockQuantity, categories } = req.body ?? {};
-  const errors = [];
+  const categorySchema = nonEmptyStringSchema(
+    "categories must contain non-empty strings"
+  );
+  const updateBookSchema = z.object({
+    title: nonEmptyStringSchema("Title must be a non-empty string").optional(),
+    author: nonEmptyStringSchema("Author must be a non-empty string").optional(),
+    price: nonNegativeNumberSchema("Price must be a number >= 0").optional(),
+    stockQuantity: nonNegativeNumberSchema(
+      "stockQuantity must be a number >= 0"
+    ).optional(),
+    categories: z
+      .array(categorySchema, {
+        invalid_type_error: "categories must be an array",
+      })
+      .optional(),
+  });
 
-  if (title !== undefined && !isNonEmptyString(title)) {
-    errors.push({ field: "title", message: "Title must be a non-empty string" });
-  }
-
-  if (author !== undefined && !isNonEmptyString(author)) {
-    errors.push({
-      field: "author",
-      message: "Author must be a non-empty string",
-    });
-  }
-
-  if (price !== undefined && !isPositiveNumber(price)) {
-    errors.push({ field: "price", message: "Price must be a number >= 0" });
-  }
-
-  if (
-    stockQuantity !== undefined &&
-    (!Number.isFinite(stockQuantity) || stockQuantity < 0)
-  ) {
-    errors.push({
-      field: "stockQuantity",
-      message: "stockQuantity must be a number >= 0",
-    });
-  }
-
-  if (categories !== undefined && !Array.isArray(categories)) {
-    errors.push({
-      field: "categories",
-      message: "categories must be an array",
-    });
-  }
-
-  if (Array.isArray(categories)) {
-    categories.forEach((category, index) => {
-      if (!isNonEmptyString(category)) {
-        errors.push({
-          field: `categories[${index}]`,
-          message: "categories must contain non-empty strings",
-        });
-      }
-    });
-  }
-
-  return errors.length ? next(buildValidationError(errors)) : next();
+  return runSchema(updateBookSchema, req.body ?? {}, next);
 };

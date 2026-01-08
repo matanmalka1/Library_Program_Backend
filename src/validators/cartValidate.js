@@ -1,30 +1,22 @@
-import mongoose from "mongoose";
-import { buildValidationError, isPositiveInteger } from "./validatorUtils.js";
+import { z } from "zod";
+import {
+  objectIdSchema,
+  positiveIntegerSchema,
+  runSchema,
+} from "./validatorUtils.js";
 
 export const validateCartPayload = (req, _res, next) => {
-  const { items } = req.body ?? {};
-  const errors = [];
+  const itemSchema = z.object({
+    bookId: objectIdSchema("book"),
+    quantity: positiveIntegerSchema("quantity must be a positive integer"),
+  });
 
-  if (!Array.isArray(items)) {
-    errors.push({ field: "items", message: "items must be an array" });
-  } else {
-    items.forEach((item, index) => {
-      const bookId = item?.bookId;
-      const quantity = item?.quantity;
-      if (!mongoose.Types.ObjectId.isValid(bookId)) {
-        errors.push({
-          field: `items[${index}].bookId`,
-          message: "Invalid book ID format",
-        });
-      }
-      if (!isPositiveInteger(quantity)) {
-        errors.push({
-          field: `items[${index}].quantity`,
-          message: "quantity must be a positive integer",
-        });
-      }
-    });
-  }
+  const cartSchema = z.object({
+    items: z.array(itemSchema, {
+      required_error: "items must be an array",
+      invalid_type_error: "items must be an array",
+    }),
+  });
 
-  return errors.length ? next(buildValidationError(errors)) : next();
+  return runSchema(cartSchema, req.body ?? {}, next);
 };

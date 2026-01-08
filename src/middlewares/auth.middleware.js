@@ -1,10 +1,9 @@
 import { logger } from "../utils/logger.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
 import { getUserFromToken } from "../utils/auth-helpers.js";
 import { authenticationError,authorizationError } from "../utils/error-factories.js";
 
 // Authenticate request by validating JWT and loading user with role/permissions.
-export const authenticate = asyncHandler(async (req, _res, next) => {
+export const authenticate = async (req, _res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -26,11 +25,11 @@ export const authenticate = asyncHandler(async (req, _res, next) => {
     req.user.id = req.user._id.toString();
   }
   next();
-});
+};
 
 // Check authenticated user's role against allowed roles.
 export const authorize = (...roles) => {
-  return asyncHandler(async (req, _res, next) => {
+  return async (req, _res, next) => {
     if (!req.user) {
       throw authorizationError("User not authenticated");
     }
@@ -42,12 +41,12 @@ export const authorize = (...roles) => {
     }
 
     next();
-  });
+  };
 };
 
 // Check authenticated user's permissions for a resource/action pair.
 export const checkPermission = (resource, action) => {
-  return asyncHandler(async (req, _res, next) => {
+  return async (req, _res, next) => {
     if (!req.user || !req.user.role) {
       throw authorizationError("User not authenticated");
     }
@@ -62,5 +61,5 @@ export const checkPermission = (resource, action) => {
     }
 
     next();
-  });
+  };
 };

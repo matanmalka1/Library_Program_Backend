@@ -1,65 +1,45 @@
-import mongoose from "mongoose";
+import { z } from "zod";
 import {
-  buildValidationError,
-  isNonEmptyString,
-  isPositiveInteger,
+  nonEmptyStringSchema,
+  objectIdSchema,
+  positiveIntegerSchema,
+  runSchema,
 } from "./validatorUtils.js";
 
 const ORDER_STATUSES = ["PENDING", "SHIPPED", "DELIVERED", "CANCELLED"];
 
 export const validateOrderIdParam = (req, _res, next) => {
-  const { id } = req.params;
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return next(
-      buildValidationError([{ field: "id", message: "Invalid order ID format" }])
-    );
-  }
-  return next();
+  const paramsSchema = z.object({
+    id: objectIdSchema("order"),
+  });
+  return runSchema(paramsSchema, req.params ?? {}, next);
 };
 
 export const validateCreateOrder = (req, _res, next) => {
-  const { items, shippingAddress } = req.body ?? {};
-  const errors = [];
+  const itemSchema = z.object({
+    bookId: objectIdSchema("book"),
+    quantity: positiveIntegerSchema("quantity must be a positive integer"),
+  });
 
-  if (!Array.isArray(items) || items.length === 0) {
-    errors.push({ field: "items", message: "items must be a non-empty array" });
-  } else {
-    items.forEach((item, index) => {
-      const bookId = item?.bookId;
-      const quantity = item?.quantity;
-      if (!mongoose.Types.ObjectId.isValid(bookId)) {
-        errors.push({
-          field: `items[${index}].bookId`,
-          message: "Invalid book ID format",
-        });
-      }
-      if (!isPositiveInteger(quantity)) {
-        errors.push({
-          field: `items[${index}].quantity`,
-          message: "quantity must be a positive integer",
-        });
-      }
-    });
-  }
+  const createOrderSchema = z.object({
+    items: z
+      .array(itemSchema, {
+        required_error: "items must be a non-empty array",
+        invalid_type_error: "items must be a non-empty array",
+      })
+      .min(1, { message: "items must be a non-empty array" }),
+    shippingAddress: nonEmptyStringSchema("shippingAddress is required"),
+  });
 
-  if (!isNonEmptyString(shippingAddress)) {
-    errors.push({
-      field: "shippingAddress",
-      message: "shippingAddress is required",
-    });
-  }
-
-  return errors.length ? next(buildValidationError(errors)) : next();
+  return runSchema(createOrderSchema, req.body ?? {}, next);
 };
 
 export const validateOrderStatus = (req, _res, next) => {
-  const { status } = req.body ?? {};
-  if (!ORDER_STATUSES.includes(status)) {
-    return next(
-      buildValidationError([
-        { field: "status", message: "Invalid order status" },
-      ])
-    );
-  }
-  return next();
+  const statusSchema = z.object({
+    status: z.string().refine((value) => ORDER_STATUSES.includes(value), {
+      message: "Invalid order status",
+    }),
+  });
+
+  return runSchema(statusSchema, req.body ?? {}, next);
 };

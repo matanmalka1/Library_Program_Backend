@@ -20,12 +20,12 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@radix-ui/react-select": "^2.2.6",
     "bcrypt": "^5.1.1",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "express-async-errors": "^3.1.1",
     "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^7.1.5",
     "helmet": "^7.1.0",
@@ -36,7 +36,8 @@
     "passport": "^0.7.0",
     "passport-github2": "^0.1.12",
     "passport-google-oauth20": "^2.0.0",
-    "winston": "^3.19.0"
+    "winston": "^3.19.0",
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "jscpd": "^4.0.5",

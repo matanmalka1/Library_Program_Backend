@@ -1,9 +1,8 @@
-import { asyncHandler } from "../utils/asyncHandler.js";
 import { successResponse } from "../utils/response.js";
 import { fileUploadError } from "../utils/error-factories.js";
 
 // Handle single file upload response payload.
-export const uploadFile = asyncHandler(async (req, res) => {
+export const uploadFile = async (req, res) => {
   if (!req.file) {
     throw fileUploadError("No file uploaded");
   }
@@ -17,4 +16,4 @@ export const uploadFile = asyncHandler(async (req, res) => {
   };
 
   successResponse(res, { file: fileInfo }, "File uploaded successfully", 201);
-});
+};
