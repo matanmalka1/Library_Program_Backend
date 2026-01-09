@@ -38,7 +38,8 @@ const bookSchema = new mongoose.Schema(
       min: 0,
     },
     categories: {
-      type: [String],
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "Category",
       default: [],
       index: true,
     },

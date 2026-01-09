@@ -157,6 +157,15 @@ const seed = async () => {
 
   console.log("Categories created");
 
+  const categoryDocs = await Category.find({ name: { $in: categories } })
+    .select("_id name")
+    .lean();
+  const categoryMap = new Map(
+    categoryDocs.map((category) => [category.name, category._id])
+  );
+  const mapCategoryNames = (names) =>
+    (names || []).map((name) => categoryMap.get(name)).filter(Boolean);
+
   // Seed books
   const books = [
     {
@@ -984,6 +993,7 @@ const seed = async () => {
     if (!existing) {
       await Book.create({
         ...book,
+        categories: mapCategoryNames(book.categories),
         publicationDate: new Date(book.publicationDate),
       });
     }

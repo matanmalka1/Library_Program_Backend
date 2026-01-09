@@ -18,15 +18,18 @@ export const validateCreateBook = (req, _res, next) => {
     title: nonEmptyStringSchema("Title is required"),
     author: nonEmptyStringSchema("Author is required"),
     price: nonNegativeNumberSchema("Price must be a number >= 0"),
+    categories: z
+      .array(objectIdSchema("category"), {
+        invalid_type_error: "categories must be an array",
+      })
+      .optional(),
   });
 
   return runSchema(createBookSchema, req.body ?? {}, next);
 };
 
 export const validateUpdateBook = (req, _res, next) => {
-  const categorySchema = nonEmptyStringSchema(
-    "categories must contain non-empty strings"
-  );
+  const categorySchema = objectIdSchema("category");
   const updateBookSchema = z.object({
     title: nonEmptyStringSchema("Title must be a non-empty string").optional(),
     author: nonEmptyStringSchema("Author must be a non-empty string").optional(),

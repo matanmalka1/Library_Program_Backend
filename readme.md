@@ -794,7 +794,6 @@ backend/
 │   │   └── auth/            # Auth-specific services
 │   │
 │   ├── utils/               # Utility functions
-│   │   ├── asyncHandler.js       # Async error wrapper
 │   │   ├── auth-helpers.js       # Auth utilities
 │   │   ├── error-factories.js    # Error creation
 │   │   ├── jwt.js                # JWT token utilities
