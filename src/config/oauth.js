@@ -1,6 +1,7 @@
 import passport from "passport";
 import { Strategy as GoogleOAuth2Strategy } from "passport-google-oauth20";
 import { Strategy as GitHubOAuth2Strategy } from "passport-github2";
+import { Strategy as FacebookStrategy } from "passport-facebook";
 import { User, Role } from "../models/index.js";
 import { hashPassword } from "../utils/password.js";
 import { logger } from "../utils/logger.js";
@@ -99,6 +100,36 @@ export const configureGoogleStrategy = () => {
 
 export const configureGitHubStrategy = () => {
   configureOAuthStrategy("GitHub",GitHubOAuth2Strategy,"GITHUB_CLIENT_ID","GITHUB_CLIENT_SECRET");
+};
+
+export const configureFacebookStrategy = () => {
+  const clientID = process.env.FACEBOOK_CLIENT_ID;
+  const clientSecret = process.env.FACEBOOK_CLIENT_SECRET;
+
+  if (!clientID || !clientSecret) {
+    logger.warn("Facebook OAuth: FACEBOOK_CLIENT_ID or FACEBOOK_CLIENT_SECRET not set. Facebook login disabled.");
+    return;
+  }
+
+  passport.use(
+    new FacebookStrategy(
+      {
+        clientID,
+        clientSecret,
+        callbackURL: `${process.env.API_URL || "http://localhost:3000/api/v1"}/auth/facebook/callback`,
+        profileFields: ["id", "displayName", "name", "emails", "photos"],
+      },
+      async (_accessToken, _refreshToken, profile, done) => {
+        try {
+          const user = await findOrCreateUser(profile, "facebook");
+          return done(null, user);
+        } catch (error) {
+          return done(error);
+        }
+      }
+    )
+  );
+  logger.info("Facebook OAuth strategy configured");
 };
 
 passport.serializeUser((user, done) => {

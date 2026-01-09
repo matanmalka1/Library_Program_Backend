@@ -46,6 +46,10 @@ const userSchema = new mongoose.Schema(
         id: String,
         displayName: String,
       },
+      facebook: {
+        id: String,
+        displayName: String,
+      },
     },
     phoneNumber: {
       type: String,

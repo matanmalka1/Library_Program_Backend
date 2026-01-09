@@ -13,6 +13,7 @@ import { router } from "./routes/index.js";
 import {
   configureGoogleStrategy,
   configureGitHubStrategy,
+  configureFacebookStrategy,
 } from "./config/oauth.js";
 
 export const app = express();
@@ -39,6 +40,7 @@ app.use(mongoSanitize());
 // Initialize Passport for OAuth
 configureGoogleStrategy();
 configureGitHubStrategy();
+configureFacebookStrategy();
 app.use(passport.initialize());
 
 app.use(requestLogger);

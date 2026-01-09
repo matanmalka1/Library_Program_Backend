@@ -69,3 +69,16 @@ router.get(
   passport.authenticate("github", { session: false }),
   handleOAuthCallback
 );
+
+// Redirects user to Facebook login consent screen
+router.get(
+  "/facebook",
+  passport.authenticate("facebook", { scope: ["email", "public_profile"] })
+);
+
+// Called by Facebook after user grants permission
+router.get(
+  "/facebook/callback",
+  passport.authenticate("facebook", { session: false }),
+  handleOAuthCallback
+);
