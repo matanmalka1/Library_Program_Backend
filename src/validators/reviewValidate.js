@@ -1,24 +1,17 @@
 import { z } from "zod";
 import {
   nonEmptyStringSchema,
-  objectIdSchema,
   ratingSchema,
   runSchema,
+  validateObjectIdParam,
 } from "./validatorUtils.js";
 
-export const validateBookIdParam = (req, _res, next) => {
-  const paramsSchema = z.object({
-    id: objectIdSchema("book"),
-  });
-  return runSchema(paramsSchema, req.params ?? {}, next);
-};
+export const validateBookIdParam = validateObjectIdParam("book");
 
-export const validateReviewIdParam = (req, _res, next) => {
-  const paramsSchema = z.object({
-    reviewId: objectIdSchema("review"),
-  });
-  return runSchema(paramsSchema, req.params ?? {}, next);
-};
+export const validateReviewIdParam = validateObjectIdParam(
+  "review",
+  "reviewId"
+);
 
 export const validateCreateReview = (req, _res, next) => {
   const createReviewSchema = z.object({

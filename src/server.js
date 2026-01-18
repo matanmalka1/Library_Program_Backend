@@ -32,6 +32,6 @@ process.on('unhandledRejection', (reason, promise) => {
 
 // Log startup failures not caught inside startServer.
 startServer().catch((error) => {
-  logger.error("Failed to start server", { error: error.message });
+  logger.error("Failed to start server", { error: error.message }) ;
   process.exit(1);
 });

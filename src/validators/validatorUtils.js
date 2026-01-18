@@ -31,6 +31,15 @@ export const runSchema = (schema, data, next) => {
   return next(buildValidationError(zodErrorsToFields(result.error)));
 };
 
+export const validateObjectIdParam =
+  (label, paramName = "id") =>
+  (req, _res, next) => {
+    const paramsSchema = z.object({
+      [paramName]: objectIdSchema(label),
+    });
+    return runSchema(paramsSchema, req.params ?? {}, next);
+  };
+
 export const isValidObjectId = (value) =>
   mongoose.Types.ObjectId.isValid(value);
 

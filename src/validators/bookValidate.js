@@ -2,16 +2,11 @@ import { z } from "zod";
 import {
   nonEmptyStringSchema,
   nonNegativeNumberSchema,
-  objectIdSchema,
   runSchema,
+  validateObjectIdParam,
 } from "./validatorUtils.js";
 
-export const validateBookIdParam = (req, _res, next) => {
-  const paramsSchema = z.object({
-    id: objectIdSchema("book"),
-  });
-  return runSchema(paramsSchema, req.params ?? {}, next);
-};
+export const validateBookIdParam = validateObjectIdParam("book");
 
 export const validateCreateBook = (req, _res, next) => {
   const createBookSchema = z.object({
